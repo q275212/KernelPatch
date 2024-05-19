@@ -112,6 +112,7 @@ struct patch_symbol
             uint64_t rest_init;
             uint64_t cgroup_init;
             uint64_t kernel_init;
+            uint64_t xbc_init;
             uint64_t report_cfi_failure;
             uint64_t __cfi_slowpath_diag;
             uint64_t __cfi_slowpath;
