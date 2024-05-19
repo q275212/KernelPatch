@@ -117,7 +117,34 @@ static void after_kernel_init(hook_fargs4_t *args, void *udata)
 {
     log_boot("event: %s\n", EXTRA_EVENT_POST_KERNEL_INIT);
 }
+static void replace_string(char *original, u32 orig_len,const char *pattern, const char *replacement) {
+    int pat_len = strlen(pattern);
+    int rep_len = strlen(replacement);
 
+    int i, j, k = 0;
+
+    for (i = 0; i < orig_len; i++) {
+        // 如果找到了与pattern匹配的子字符串
+        if (strncmp(original + i, pattern, pat_len) == 0) {
+            // 复制replacement字符串到original中
+            for (j = 0; j < rep_len; j++) {
+                original[i + j] = replacement[j];
+            }
+            // 移动剩余的字符
+            for (k = i + rep_len; k < orig_len; k++) {
+                original[k] = original[k + pat_len - rep_len];
+            }
+            // 更新i，以便跳过已匹配的部分
+            i += rep_len - 1;
+        }
+    }
+}
+static void before_xbc_init(hook_fargs4_t *args, void *udata){
+    char *data = (char*)args->arg0;
+    size_t size =  strlen(data);
+	replace_string(data,size, "orange", "green");
+	replace_string(data,size, "unlocked", "locked");    
+}
 int patch()
 {
     hook_err_t ret = 0;
@@ -145,6 +172,12 @@ int patch()
         log_boot("hook kernel_init rc: %d\n", rc);
         ret |= rc;
     }
-
+    // xbc_init
+    unsigned long xbc_init_addr = get_preset_patch_sym()->xbc_init;
+    if (xbc_init_addr) {
+        hook_err_t rc = hook_wrap4((void *)xbc_init_addr, before_xbc_init, 0, 0);
+        log_boot("hook xbc_init rc: %d\n", rc);
+        ret |= rc;
+    }
     return ret;
 }
